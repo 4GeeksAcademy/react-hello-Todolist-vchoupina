@@ -74,15 +74,34 @@ const Home = () => {
 
 	// Eliminar tarefa
 	const handleRemoveTodo = (index) => {
-		const updatedTodos = todos.filter((todo, i) => i !== index);
-		setTodos(updatedTodos);
-		syncTodosWithServer(updatedTodos); 
+		const todoId = todos[index].id; // Obtém o ID do todo que será deletado
+		fetch(`https://playground.4geeks.com/todo/todos/${todoId}`, {
+			method: 'DELETE'
+		})
+		.then(resp => {
+			if (!resp.ok) {
+				throw new Error('Erro ao deletar o todo');
+			}
+			console.log(`Todo com id ${todoId} deletado com sucesso`);
+			const updatedTodos = todos.filter((todo, i) => i !== index);
+			setTodos(updatedTodos);
+		})
+		.catch(error => console.error('Erro ao deletar o todo:', error));
 	};
 
 	// Limpar todas as tarefas
 	const handleClearTodos = () => {
-		setTodos([]);
-		syncTodosWithServer([]); // Sincronizar com o backend após limpar todas as tarefas
+		fetch('https://playground.4geeks.com/todo/users/vchoupina', {
+			method: 'DELETE'
+		})
+		.then(resp => {
+			if (!resp.ok) {
+				throw new Error('Erro ao deletar todos os todos do usuário');
+			}
+			console.log('Todos deletados com sucesso');
+			setTodos([]); // Limpa o estado local após a deleção no servidor
+		})
+		.catch(error => console.error('Erro ao deletar os todos:', error));
 	};
 
 	return (
