@@ -5,17 +5,37 @@ const Home = () => {
 	const [todos, setTodos] = useState([]);
 	const [newTodo, setNewTodo] = useState("");
 
-	useEffect(() => {
+	const getTodos = ()=>{
 		fetch('https://playground.4geeks.com/todo/users/vchoupina')
-			.then(resp => resp.json())
+			.then(resp => {
+				if (!resp.ok) {
+					CreateNewList()
+				} else{return resp.json()}
+			})
 			.then(data => {
-				if (Array.isArray(data)) {
-					setTodos(data); // Atualiza o estado se for um array
+				console.log(data)
+				if (Array.isArray(data.todos)) {
+					setTodos(data.todos); // Atualiza o estado se for um array
 				} else {
 					setTodos([]); // Define um array vazio se o dado retornado não for um array
 				}
 			})
 			.catch(error => console.error('Error fetching todos:', error));
+	}
+
+		const CreateNewList = ()=>{
+			fetch('https://playground.4geeks.com/todo/users/vchoupina', {method: "POST"}) 
+			.then(resp => {
+				return resp.json()
+			})
+			.then(data => {
+				getTodos();
+				
+			})
+			.catch(error => console.error('Error fetching todos:', error));
+		}
+	useEffect(() => {
+		getTodos();
 	}, []);
 
 	const syncTodosWithServer = (updatedTodos) => {
@@ -36,10 +56,19 @@ const Home = () => {
 	// Nova tarefa
 	const handleAddTodo = (e) => {
 		if (e.key === "Enter" && newTodo.trim() !== "") {
-			const updatedTodos = [...todos, newTodo];
-			setTodos(updatedTodos);
-			setNewTodo("");
-			syncTodosWithServer(updatedTodos); 
+			fetch("https://playground.4geeks.com/todo/todos/vchoupina", {
+				method: "POST",
+				body: JSON.stringify({
+					"label": newTodo, 
+					"is_done": false
+				}), 
+				headers: {"Content-Type": "application/json"}
+			})
+			.then(resp => resp.json())
+			.then(data => {
+				getTodos()
+				setNewTodo("") 
+			})
 		}
 	};
 
@@ -73,7 +102,7 @@ const Home = () => {
 					) : (
 						todos.map((todo, index) => (
 							<li key={index} className="todo-item">
-								{todo}
+								{todo.label}
 								<span
 									className="remove-icon"
 									onClick={() => handleRemoveTodo(index)}
